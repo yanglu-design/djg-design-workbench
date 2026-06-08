@@ -1,0 +1,363 @@
+:root {
+  background: #f4f6fb;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+@font-face {
+  font-family: "Alimama ShuHeiTi";
+  src:
+    local("Alimama ShuHeiTi"),
+    local("AlimamaShuHeiTi"),
+    local("阿里妈妈数黑体");
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.appShell {
+  margin: 0 auto;
+  max-width: 1320px;
+  padding: 28px 20px 36px;
+}
+
+.pageHeader {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.pageHeader h1,
+h2 {
+  margin: 0;
+}
+
+.pageHeader h1 {
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+h2 {
+  color: #111827;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.headerActions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  height: 34px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.primaryButton {
+  background: #1677ff;
+  border: 1px solid #1677ff;
+  color: #ffffff;
+}
+
+.primaryButton:hover {
+  background: #4096ff;
+  border-color: #4096ff;
+}
+
+.downloadButton {
+  box-shadow: 0 6px 14px rgba(22, 119, 255, 0.22);
+}
+
+.secondaryButton {
+  background: #ffffff;
+  border: 1px solid #d7deea;
+  color: #344054;
+}
+
+.workspace {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.configPanel,
+.previewPanel {
+  background: #ffffff;
+  border: 1px solid #e4e9f2;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(18, 32, 59, 0.06);
+  padding: 18px;
+}
+
+.configPanel h2 {
+  margin-bottom: 18px;
+}
+
+.configGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.previewHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.formControl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.formControlFull {
+  grid-column: 1 / -1;
+}
+
+.formControl span {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.formControl input,
+.formControl textarea,
+.formControl select {
+  background: #ffffff;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  color: #1f2937;
+  height: 38px;
+  outline: none;
+  padding: 0 12px;
+}
+
+.formControl textarea {
+  height: 96px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.formControl select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #667085 50%),
+    linear-gradient(135deg, #667085 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 16px,
+    calc(100% - 13px) 16px;
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
+  padding-right: 40px;
+}
+
+.formControl input:focus,
+.formControl textarea:focus,
+.formControl select:focus {
+  border-color: #3e82f7;
+  box-shadow: 0 0 0 3px rgba(62, 130, 247, 0.14);
+}
+
+.previewViewport {
+  background: #f7f9fc;
+  border: 1px solid #e7ecf5;
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px;
+}
+
+.bannerCanvas {
+  align-items: center;
+  background: var(--banner-bg);
+  display: flex;
+  height: 60px;
+  overflow: visible;
+  position: relative;
+  width: 1920px;
+}
+
+.bannerCanvas-center {
+  justify-content: center;
+}
+
+.bannerCanvas-left {
+  justify-content: flex-start;
+  padding-left: 72px;
+}
+
+.bannerTrack {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 16px;
+  height: 60px;
+  min-width: max-content;
+  overflow: visible;
+}
+
+.bannerContentLayer,
+.bannerButtonLayer {
+  align-items: center;
+  color: var(--text-color);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-family: "Alimama ShuHeiTi", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  height: 44px;
+  line-height: 1;
+  position: relative;
+  white-space: nowrap;
+}
+
+.bannerContentLayer {
+  background: var(--content-fill);
+  border: 1px solid transparent;
+  border-radius: 22px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 2px 6px rgba(36, 88, 160, 0.06);
+  gap: 8px;
+  padding: 0 24px;
+  width: var(--content-width);
+}
+
+.bannerContentLayer::before,
+.bannerButtonLayer::before {
+  background: var(--content-stroke);
+  border-radius: inherit;
+  content: "";
+  inset: -1px;
+  opacity: .72;
+  position: absolute;
+  z-index: -1;
+}
+
+.bannerMessage,
+.bannerButtonText {
+  display: inline-block;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.bannerButtonLayer {
+  background: var(--button-fill);
+  border: 1px solid transparent;
+  border-radius: 22px;
+  justify-content: center;
+  padding: 0 18px;
+  z-index: 1;
+  width: var(--button-width);
+}
+
+.bannerIcon {
+  flex: 0 0 auto;
+  height: 60px;
+  margin-left: -76px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  width: 80px;
+  z-index: 2;
+}
+
+.bannerDecoration {
+  flex: 0 0 auto;
+  height: 33px;
+  margin-left: -31px;
+  object-fit: contain;
+  pointer-events: none;
+  transform: translateY(8px);
+  user-select: none;
+  width: 40px;
+  z-index: 3;
+}
+
+.theme-green {
+  --icon-a: #26B7D3;
+  --icon-b: #50D6AB;
+  --icon-accent: #FF78A8;
+}
+
+.theme-blue,
+.theme-survey-blue,
+.theme-tutorial-blue {
+  --icon-a: #5B8DFF;
+  --icon-b: #4CAEFF;
+  --icon-accent: #7C6EFF;
+}
+
+.theme-pink {
+  --icon-a: #FF4E63;
+  --icon-b: #FF4CA2;
+  --icon-accent: #FFB347;
+}
+
+.theme-purple {
+  --icon-a: #8D5FDA;
+  --icon-b: #C17AF3;
+  --icon-accent: #76A8FF;
+}
+
+@media (max-width: 900px) {
+  .configGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .appShell {
+    padding: 20px 12px 28px;
+  }
+
+  .pageHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions {
+    justify-content: flex-start;
+  }
+
+  .configGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formControlFull {
+    grid-column: auto;
+  }
+}
