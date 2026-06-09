@@ -167,6 +167,7 @@ const fieldIds = {
   preview: "previewMount",
   download: "downloadBtn",
   reset: "resetBtn",
+  messageCount: "messageCount",
 };
 
 function createElement(tag, className, text) {
@@ -271,17 +272,24 @@ function initPage() {
       <header class="pageHeader">
         <div>
           <h1>横幅广告配置器</h1>
+          <p>配置系统横幅公告内容，实时预览效果并下载使用</p>
         </div>
         <div class="headerActions">
-          <button class="secondaryButton" id="${fieldIds.reset}" type="button">重置当前模板</button>
+          <button class="secondaryButton" id="${fieldIds.reset}" type="button">
+            <span class="buttonIcon" aria-hidden="true">${ResetIcon()}</span>
+            <span>重置当前模板</span>
+          </button>
+          <button class="primaryButton downloadButton" id="${fieldIds.download}" type="button">
+            <span class="buttonIcon" aria-hidden="true">${DownloadIcon()}</span>
+            <span>下载 PNG</span>
+          </button>
         </div>
       </header>
 
       <section class="workspace">
         <section class="previewPanel">
           <div class="previewHeader">
-            <h2>预览区</h2>
-            <button class="primaryButton downloadButton" id="${fieldIds.download}" type="button">下载 PNG</button>
+            <h2>横幅预览 <span>（实时效果）</span></h2>
           </div>
           <div class="previewViewport">
             <div id="${fieldIds.preview}"></div>
@@ -289,9 +297,9 @@ function initPage() {
         </section>
 
         <aside class="configPanel">
-          <h2>配置</h2>
+          <h2>配置内容</h2>
           <div class="configGrid">
-            ${FormSelect(fieldIds.templateType, "模板类型", Object.entries(bannerTemplates).map(([value, item]) => ({ value, label: item.label })))}
+            ${FormSelect(fieldIds.templateType, "横幅类型", Object.entries(bannerTemplates).map(([value, item]) => ({ value, label: item.label })))}
             ${FormSelect(fieldIds.align, "对齐方式", alignOptions)}
             <label class="formControl">
               <span>按钮文案</span>
@@ -300,9 +308,18 @@ function initPage() {
             <label class="formControl formControlFull">
               <span>提示文案</span>
               <textarea id="${fieldIds.message}" rows="4" autocomplete="off"></textarea>
+              <span class="messageMeta">
+                <span>建议字数：10~100 字</span>
+                <span id="${fieldIds.messageCount}">0 / 100</span>
+              </span>
             </label>
           </div>
         </aside>
+
+        <div class="tipBar">
+          <span class="tipIcon" aria-hidden="true">i</span>
+          <span>提示：横幅将展示在工作台页面顶部，建议内容简洁明确，突出重点信息。</span>
+        </div>
       </section>
     </main>
   `;
@@ -358,6 +375,34 @@ function applyTemplateDefaults(templateType) {
 function renderAll() {
   const config = buildConfig();
   BannerPreview(getField(fieldIds.preview), config);
+  updateMessageMeta(config.content.message);
+}
+
+function updateMessageMeta(message) {
+  const count = String(message).length;
+  const countNode = getField(fieldIds.messageCount);
+  if (countNode) {
+    countNode.textContent = `${count} / 100`;
+  }
+}
+
+function ResetIcon() {
+  return `
+    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+      <path d="M4 12a8 8 0 1 0 2.34-5.66L4 8.68"/>
+      <path d="M4 4v4.68h4.68"/>
+    </svg>
+  `;
+}
+
+function DownloadIcon() {
+  return `
+    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+      <path d="M12 3v12"/>
+      <path d="m7 10 5 5 5-5"/>
+      <path d="M5 19h14"/>
+    </svg>
+  `;
 }
 
 function BannerPreview(mount, config) {
@@ -432,104 +477,147 @@ function BannerDecoration(type) {
 
 async function downloadPreviewPng(event) {
   const button = event.currentTarget;
-  const originalText = button.textContent;
-  button.textContent = "生成中";
+  const originalText = getButtonLabel(button);
+  setButtonLabel(button, "生成中");
 
   try {
     const config = buildConfig();
     const canvas = await renderPreviewSvgToCanvas(config);
     const blob = await canvasToPngBlob(canvas);
     await savePngBlob(blob, `${config.templateType}-banner.png`);
-    button.textContent = "已下载";
+    setButtonLabel(button, "已下载");
   } catch (error) {
     console.error(error);
-    button.textContent = "下载失败";
+    setButtonLabel(button, "下载失败");
   }
 
   window.setTimeout(() => {
-    button.textContent = originalText;
+    setButtonLabel(button, originalText);
   }, 1200);
 }
 
+function getButtonLabel(button) {
+  return button.querySelector("span:last-child")?.textContent || button.textContent;
+}
+
+function setButtonLabel(button, text) {
+  const label = button.querySelector("span:last-child");
+  if (label) {
+    label.textContent = text;
+  } else {
+    button.textContent = text;
+  }
+}
+
 async function renderPreviewSvgToCanvas(config) {
-  const source = getField(fieldIds.preview).querySelector(".bannerCanvas");
+  const { host, source } = createExportPreviewSource(config);
   if (!source) {
+    host.remove();
     throw new Error("未找到可下载的预览图");
   }
 
-  const canvasRect = source.getBoundingClientRect();
-  const width = Math.ceil(canvasRect.width);
-  const height = Math.ceil(canvasRect.height);
-  const content = source.querySelector(".bannerContentLayer");
-  const button = source.querySelector(".bannerButtonLayer");
-  const icon = source.querySelector(".bannerIcon");
-  const decoration = source.querySelector(".bannerDecoration");
-  const message = source.querySelector(".bannerMessage");
-  const buttonText = source.querySelector(".bannerButtonText");
-
-  if (!content || !message) {
-    throw new Error("预览内容不完整，无法生成 PNG");
-  }
-
-  const contentRect = getRelativeRect(content, canvasRect);
-  const buttonRect = button ? getRelativeRect(button, canvasRect) : null;
-  const iconRect = icon ? getRelativeRect(icon, canvasRect) : null;
-  const decorationRect = decoration ? getRelativeRect(decoration, canvasRect) : null;
-  const messageRect = getRelativeRect(message, canvasRect);
-  const buttonTextRect = buttonText ? getRelativeRect(buttonText, canvasRect) : null;
-  const iconHref = icon ? await imageElementToHref(icon) : "";
-  const decorationHref = decoration ? await imageElementToHref(decoration) : "";
-  const defs = [
-    svgLinearGradient("bannerBg", config.theme.background[config.layout]),
-    svgLinearGradient("contentFill", config.theme.contentFill),
-    svgLinearGradient("contentStroke", config.theme.contentStroke, "vertical"),
-    svgLinearGradient("buttonFill", config.theme.buttonFill),
-  ].join("");
-
-  const parts = [
-    `<rect x="0" y="0" width="${width}" height="${height}" fill="url(#bannerBg)"/>`,
-    svgPill(contentRect, "contentStroke"),
-    svgPill(insetRect(contentRect, 1), "contentFill"),
-  ];
-
-  if (iconHref && iconRect) {
-    parts.push(svgImage(iconHref, iconRect));
-  }
-
-  parts.push(svgText(config.content.message, messageRect.x, height / 2 + 1, "start", config.theme.textColor));
-
-  if (buttonRect && config.button.enabled) {
-    parts.push(svgPill(buttonRect, "contentStroke"));
-    parts.push(svgPill(insetRect(buttonRect, 1), "buttonFill"));
-    if (buttonTextRect) {
-      parts.push(svgText(config.button.text, buttonRect.x + buttonRect.width / 2, height / 2 + 1, "middle", config.theme.textColor));
-    }
-  }
-
-  if (decorationHref && decorationRect) {
-    parts.push(svgImage(decorationHref, decorationRect));
-  }
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <defs>${defs}</defs>
-      ${parts.join("")}
-    </svg>
-  `;
-  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(svgBlob);
-
   try {
-    const image = await loadImage(url);
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    context.drawImage(image, 0, 0);
-    return canvas;
+    const canvasRect = source.getBoundingClientRect();
+    const width = Math.ceil(canvasRect.width);
+    const height = Math.ceil(canvasRect.height);
+    const content = source.querySelector(".bannerContentLayer");
+    const button = source.querySelector(".bannerButtonLayer");
+    const icon = source.querySelector(".bannerIcon");
+    const decoration = source.querySelector(".bannerDecoration");
+    const message = source.querySelector(".bannerMessage");
+    const buttonText = source.querySelector(".bannerButtonText");
+
+    if (!content || !message) {
+      throw new Error("预览内容不完整，无法生成 PNG");
+    }
+
+    const contentRect = getRelativeRect(content, canvasRect);
+    const buttonRect = button ? getRelativeRect(button, canvasRect) : null;
+    const iconRect = icon ? getRelativeRect(icon, canvasRect) : null;
+    const decorationRect = decoration ? getRelativeRect(decoration, canvasRect) : null;
+    const messageRect = getRelativeRect(message, canvasRect);
+    const buttonTextRect = buttonText ? getRelativeRect(buttonText, canvasRect) : null;
+    const iconHref = icon ? await imageElementToHref(icon) : "";
+    const decorationHref = decoration ? await imageElementToHref(decoration) : "";
+    const defs = [
+      svgLinearGradient("bannerBg", config.theme.background[config.layout]),
+      svgLinearGradient("contentFill", config.theme.contentFill),
+      svgLinearGradient("contentStroke", config.theme.contentStroke, "vertical"),
+      svgLinearGradient("buttonFill", config.theme.buttonFill),
+    ].join("");
+
+    const parts = [
+      `<rect x="0" y="0" width="${width}" height="${height}" fill="url(#bannerBg)"/>`,
+      svgPill(contentRect, "contentStroke"),
+      svgPill(insetRect(contentRect, 1), "contentFill"),
+    ];
+
+    if (iconHref && iconRect) {
+      parts.push(svgImage(iconHref, iconRect));
+    }
+
+    parts.push(svgText(config.content.message, messageRect.x, height / 2 + 1, "start", config.theme.textColor));
+
+    if (buttonRect && config.button.enabled) {
+      parts.push(svgPill(buttonRect, "contentStroke"));
+      parts.push(svgPill(insetRect(buttonRect, 1), "buttonFill"));
+      if (buttonTextRect) {
+        parts.push(svgText(config.button.text, buttonRect.x + buttonRect.width / 2, height / 2 + 1, "middle", config.theme.textColor));
+      }
+    }
+
+    if (decorationHref && decorationRect) {
+      parts.push(svgImage(decorationHref, decorationRect));
+    }
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <defs>${defs}</defs>
+        ${parts.join("")}
+      </svg>
+    `;
+    const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    try {
+      const image = await loadImage(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0);
+      return canvas;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   } finally {
-    URL.revokeObjectURL(url);
+    host.remove();
   }
+}
+
+function createExportPreviewSource(config) {
+  const host = document.createElement("div");
+  host.style.cssText = [
+    "height:60px",
+    "left:-9999px",
+    "opacity:0",
+    "overflow:visible",
+    "pointer-events:none",
+    "position:fixed",
+    "top:0",
+    "width:1920px",
+  ].join(";");
+
+  BannerPreview(host, config);
+  document.body.append(host);
+
+  const source = host.querySelector(".bannerCanvas");
+  if (source) {
+    source.style.minWidth = "1920px";
+    source.style.width = "1920px";
+  }
+
+  return { host, source };
 }
 
 function getRelativeRect(element, parentRect) {

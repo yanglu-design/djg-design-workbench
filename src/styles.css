@@ -1,5 +1,5 @@
 :root {
-  background: #f4f6fb;
+  background: #f7f9fc;
   color: #1f2937;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
   font-synthesis: none;
@@ -36,20 +36,23 @@ button {
 }
 
 .appShell {
-  margin: 0 auto;
-  max-width: 1320px;
-  padding: 28px 20px 36px;
+  margin: 0 64px;
+  max-width: none;
+  padding: 24px;
 }
 
 .pageHeader {
   align-items: center;
   display: flex;
+  border-bottom: 1px solid #e1e7f0;
   gap: 18px;
   justify-content: space-between;
   margin-bottom: 18px;
+  padding-bottom: 18px;
 }
 
 .pageHeader h1,
+.pageHeader p,
 h2 {
   margin: 0;
 }
@@ -60,10 +63,21 @@ h2 {
   line-height: 1.25;
 }
 
+.pageHeader p {
+  color: #667085;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
 h2 {
   color: #111827;
   font-size: 16px;
   line-height: 1.4;
+}
+
+h2 span {
+  color: #344054;
+  font-weight: 700;
 }
 
 .headerActions {
@@ -74,10 +88,14 @@ h2 {
 
 .primaryButton,
 .secondaryButton {
+  align-items: center;
   border-radius: 999px;
+  display: inline-flex;
   font-size: 13px;
   font-weight: 700;
+  gap: 6px;
   height: 34px;
+  justify-content: center;
   padding: 0 16px;
   white-space: nowrap;
 }
@@ -103,14 +121,29 @@ h2 {
   color: #344054;
 }
 
+.buttonIcon {
+  display: inline-flex;
+  height: 16px;
+  width: 16px;
+}
+
+.buttonIcon svg {
+  fill: none;
+  height: 100%;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+  width: 100%;
+}
+
 .workspace {
   display: grid;
   gap: 18px;
   grid-template-columns: minmax(0, 1fr);
 }
 
-.configPanel,
-.previewPanel {
+.configPanel {
   background: #ffffff;
   border: 1px solid #e4e9f2;
   border-radius: 8px;
@@ -191,13 +224,56 @@ h2 {
   box-shadow: 0 0 0 3px rgba(62, 130, 247, 0.14);
 }
 
+.messageMeta {
+  align-items: center;
+  color: #667085;
+  display: flex;
+  font-size: 13px;
+  font-weight: 400;
+  justify-content: space-between;
+  line-height: 1.4;
+}
+
+.messageMeta span {
+  color: #667085;
+  font-size: inherit;
+  font-weight: 400;
+}
+
 .previewViewport {
-  background: #f7f9fc;
-  border: 1px solid #e7ecf5;
-  border-radius: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 12px;
+  padding: 0;
+}
+
+.tipBar {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dfe7f1;
+  border-radius: 8px;
+  color: #667085;
+  display: flex;
+  font-size: 13px;
+  font-weight: 400;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.tipIcon {
+  align-items: center;
+  background: #1677ff;
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-family: Georgia, serif;
+  font-size: 11px;
+  font-style: italic;
+  font-weight: 700;
+  height: 16px;
+  justify-content: center;
+  width: 16px;
 }
 
 .bannerCanvas {
@@ -205,9 +281,10 @@ h2 {
   background: var(--banner-bg);
   display: flex;
   height: 60px;
+  min-width: 1200px;
   overflow: visible;
   position: relative;
-  width: 1920px;
+  width: 100%;
 }
 
 .bannerCanvas-center {
@@ -334,16 +411,6 @@ h2 {
 }
 
 @media (max-width: 900px) {
-  .configGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .appShell {
-    padding: 20px 12px 28px;
-  }
-
   .pageHeader {
     align-items: stretch;
     flex-direction: column;
@@ -354,10 +421,38 @@ h2 {
   }
 
   .configGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .appShell {
+    margin: 20px 12px 28px;
+  }
+
+  .pageHeader h1 {
+    font-size: 24px;
+  }
+
+  .pageHeader p {
+    font-size: 14px;
+  }
+
+  .configGrid {
     grid-template-columns: 1fr;
   }
 
   .formControlFull {
     grid-column: auto;
+  }
+
+  .headerActions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
   }
 }
