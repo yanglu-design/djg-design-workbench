@@ -152,13 +152,13 @@ const decorationAssetMap = {
 };
 
 const iconDataFileMap = {
-  normal: "./src/icon-data/normal.js?v=20260610-lazy-icons-1",
-  feature: "./src/icon-data/feature.js?v=20260610-lazy-icons-1",
-  important: "./src/icon-data/important.js?v=20260610-lazy-icons-1",
-  survey: "./src/icon-data/survey.js?v=20260610-lazy-icons-1",
-  revisit: "./src/icon-data/revisit.js?v=20260610-lazy-icons-1",
-  tutorial: "./src/icon-data/tutorial.js?v=20260610-lazy-icons-1",
-  "click-hand": "./src/icon-data/click-hand.js?v=20260610-lazy-icons-1",
+  normal: "./src/icon-data/normal.js?v=20260610-lazy-icons-2",
+  feature: "./src/icon-data/feature.js?v=20260610-lazy-icons-2",
+  important: "./src/icon-data/important.js?v=20260610-lazy-icons-2",
+  survey: "./src/icon-data/survey.js?v=20260610-lazy-icons-2",
+  revisit: "./src/icon-data/revisit.js?v=20260610-lazy-icons-2",
+  tutorial: "./src/icon-data/tutorial.js?v=20260610-lazy-icons-2",
+  "click-hand": "./src/icon-data/click-hand.js?v=20260610-lazy-icons-2",
 };
 
 const iconDataLoaders = new Map();
@@ -213,13 +213,30 @@ async function ensureConfigAssets(config) {
   await Promise.all(getConfigAssetTypes(config).map((type) => ensureInlineAsset(type)));
 }
 
-function preloadConfigAssets(config) {
-  const missingTypes = getConfigAssetTypes(config).filter((type) => !getInlineAssetSource(type));
-  if (!missingTypes.length) return;
+function getAllTemplateAssetTypes() {
+  const types = Object.values(bannerTemplates).flatMap((template) => [
+    template.defaultIcon,
+    template.defaultDecoration,
+  ]);
+  return Array.from(new Set(types.filter(Boolean)));
+}
 
-  Promise.all(missingTypes.map((type) => ensureInlineAsset(type)))
-    .then(() => renderAll())
-    .catch((error) => console.warn(error));
+function scheduleTemplateAssetPreload() {
+  const preload = () => {
+    Promise.allSettled(getAllTemplateAssetTypes().map((type) => ensureInlineAsset(type)))
+      .then((results) => {
+        results
+          .filter((result) => result.status === "rejected")
+          .forEach((result) => console.warn(result.reason));
+        renderAll();
+      });
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(preload, { timeout: 1000 });
+  } else {
+    window.setTimeout(preload, 0);
+  }
 }
 
 const fieldIds = {
@@ -390,6 +407,7 @@ function initPage() {
   bindEvents();
   applyTemplateDefaults("normal");
   renderAll();
+  scheduleTemplateAssetPreload();
 }
 
 function FormSelect(id, label, options) {
@@ -439,7 +457,6 @@ function renderAll() {
   const config = buildConfig();
   BannerPreview(getField(fieldIds.preview), config);
   updateMessageMeta(config.content.message);
-  preloadConfigAssets(config);
 }
 
 function updateMessageMeta(message) {
