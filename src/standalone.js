@@ -349,57 +349,105 @@ function buildConfig() {
 function initPage() {
   getField("root").innerHTML = `
     <main class="appShell">
-      <header class="pageHeader">
-        <div>
-          <h1>横幅公告配置器</h1>
-          <p>配置系统横幅公告内容，实时预览效果并下载使用</p>
-        </div>
-        <div class="headerActions">
-          <button class="secondaryButton" id="${fieldIds.reset}" type="button">
-            <span class="buttonIcon" aria-hidden="true">${ResetIcon()}</span>
-            <span>重置当前模板</span>
-          </button>
-          <button class="primaryButton downloadButton" id="${fieldIds.download}" type="button">
-            <span class="buttonIcon" aria-hidden="true">${DownloadIcon()}</span>
-            <span>下载 PNG</span>
-          </button>
-        </div>
-      </header>
-
-      <section class="workspace">
-        <section class="previewPanel">
-          <div class="previewHeader">
-            <h2>横幅预览 <span>（实时效果）</span></h2>
+      <aside class="sidebar">
+        <div class="brandBlock">
+          <div class="brandMark" aria-hidden="true">${WorkbenchIcon("spark")}</div>
+          <div class="brandText">
+            <strong>店管家设计工作台</strong>
+            <span>高效设计·规范输出·团队协同</span>
           </div>
-          <div class="previewViewport">
-            <div id="${fieldIds.preview}"></div>
+        </div>
+
+        <nav class="sideNav" aria-label="设计工作台导航">
+          <a class="navItem" href="#" aria-current="false">
+            <span class="navIcon" aria-hidden="true">${WorkbenchIcon("home")}</span>
+            <span>首页</span>
+          </a>
+          <div class="navGroup">
+            <span class="navGroupTitle">设计工具</span>
+            <a class="navItem isActive" href="#" aria-current="page">
+              <span class="navIcon" aria-hidden="true">${WorkbenchIcon("send")}</span>
+              <span>横幅广告配置器</span>
+            </a>
+            <a class="navItem" href="#" aria-current="false">
+              <span class="navIcon" aria-hidden="true">${WorkbenchIcon("notice")}</span>
+              <span>公告弹窗配置器</span>
+            </a>
+          </div>
+          <div class="navGroup">
+            <span class="navGroupTitle">我的资产</span>
+            <a class="navItem" href="#" aria-current="false">
+              <span class="navIcon" aria-hidden="true">${WorkbenchIcon("folder")}</span>
+              <span>我的项目</span>
+            </a>
+            <a class="navItem" href="#" aria-current="false">
+              <span class="navIcon" aria-hidden="true">${WorkbenchIcon("trash")}</span>
+              <span>回收站</span>
+            </a>
+          </div>
+        </nav>
+
+        <div class="welcomeCard" aria-hidden="true">
+          <div class="welcomeGlow"></div>
+          <strong>设计素材中心</strong>
+          <span>模板、项目与规范统一管理</span>
+        </div>
+      </aside>
+
+      <section class="workbenchMain">
+        <header class="pageHeader">
+          <div>
+            <h1>横幅广告配置器</h1>
+            <p>配置系统横幅广告内容，实时预览效果并下载使用</p>
+          </div>
+          <div class="headerActions">
+            <button class="secondaryButton" id="${fieldIds.reset}" type="button">
+              <span class="buttonIcon" aria-hidden="true">${ResetIcon()}</span>
+              <span>重置当前模板</span>
+            </button>
+            <button class="primaryButton downloadButton" id="${fieldIds.download}" type="button">
+              <span class="buttonIcon" aria-hidden="true">${DownloadIcon()}</span>
+              <span>下载 PNG</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="workspace">
+          <section class="previewPanel">
+            <div class="previewHeader">
+              <h2>实时预览</h2>
+              <p>横幅尺寸固定为：1920*60</p>
+            </div>
+            <div class="previewViewport">
+              <div id="${fieldIds.preview}"></div>
+            </div>
+          </section>
+
+          <aside class="configPanel">
+            <h2>内容配置</h2>
+            <div class="configGrid">
+              ${FormSelect(fieldIds.align, "布局", alignOptions)}
+              ${FormSelect(fieldIds.templateType, "模版类型", Object.entries(bannerTemplates).map(([value, item]) => ({ value, label: item.label })))}
+              <label class="formControl">
+                <span>按钮文案</span>
+                <input id="${fieldIds.buttonText}" type="text" autocomplete="off" />
+              </label>
+              <label class="formControl formControlFull">
+                <span>广告内容</span>
+                <textarea id="${fieldIds.message}" rows="4" autocomplete="off"></textarea>
+                <span class="messageMeta">
+                  <span>建议字数：10~100 字</span>
+                  <span id="${fieldIds.messageCount}">0 / 100</span>
+                </span>
+              </label>
+            </div>
+          </aside>
+
+          <div class="tipBar">
+            <span class="tipIcon" aria-hidden="true">i</span>
+            <span>提示：横幅将展示在工作台页面顶部，建议内容简洁明确，突出重点信息。</span>
           </div>
         </section>
-
-        <aside class="configPanel">
-          <h2>配置内容</h2>
-          <div class="configGrid">
-            ${FormSelect(fieldIds.templateType, "横幅类型", Object.entries(bannerTemplates).map(([value, item]) => ({ value, label: item.label })))}
-            ${FormSelect(fieldIds.align, "对齐方式", alignOptions)}
-            <label class="formControl">
-              <span>按钮文案</span>
-              <input id="${fieldIds.buttonText}" type="text" autocomplete="off" />
-            </label>
-            <label class="formControl formControlFull">
-              <span>提示文案</span>
-              <textarea id="${fieldIds.message}" rows="4" autocomplete="off"></textarea>
-              <span class="messageMeta">
-                <span>建议字数：10~100 字</span>
-                <span id="${fieldIds.messageCount}">0 / 100</span>
-              </span>
-            </label>
-          </div>
-        </aside>
-
-        <div class="tipBar">
-          <span class="tipIcon" aria-hidden="true">i</span>
-          <span>提示：横幅将展示在工作台页面顶部，建议内容简洁明确，突出重点信息。</span>
-        </div>
       </section>
     </main>
   `;
@@ -482,6 +530,23 @@ function DownloadIcon() {
       <path d="M12 3v12"/>
       <path d="m7 10 5 5 5-5"/>
       <path d="M5 19h14"/>
+    </svg>
+  `;
+}
+
+function WorkbenchIcon(type) {
+  const icons = {
+    home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/>',
+    send: '<path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4 18-7Z"/>',
+    notice: '<path d="M4 5h16v12H7l-3 3V5Z"/><path d="M8 9h8"/><path d="M8 13h5"/>',
+    folder: '<path d="M3 6h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>',
+    trash: '<path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/>',
+    spark: '<path d="M12 2v6"/><path d="M12 16v6"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M16 12h6"/><path d="m4.93 19.07 4.24-4.24"/><path d="m14.83 9.17 4.24-4.24"/>',
+  };
+
+  return `
+    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+      ${icons[type] || icons.home}
     </svg>
   `;
 }

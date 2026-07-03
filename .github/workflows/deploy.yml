@@ -17,33 +17,27 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate static site
+    name: Build React site
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check required files
-        run: |
-          test -f index.html
-          test -f src/standalone.js
-          test -f src/styles.css
-          test -f src/icon-data/normal.js
-          test -f src/icon-data/feature.js
-          test -f src/icon-data/important.js
-          test -f src/icon-data/survey.js
-          test -f src/icon-data/revisit.js
-          test -f src/icon-data/tutorial.js
-          test -f src/icon-data/click-hand.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-      - name: Check JavaScript syntax
-        run: node --check src/standalone.js
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Check page references
-        run: |
-          grep -q './src/styles.css' index.html
-          grep -q './src/standalone.js' index.html
+      - name: Check syntax
+        run: npm run check
+
+      - name: Build
+        run: npm run build
 
   deploy:
     name: Deploy to Pages
@@ -57,13 +51,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
