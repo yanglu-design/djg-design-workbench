@@ -24,12 +24,14 @@ import {
   HomeOutlined,
   ReloadOutlined,
   SendOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import "./styles.css";
 
 const { Sider, Content } = Layout;
 const { Text, Title } = Typography;
+const DOWNLOAD_SCALE = 2;
 const logoUrl = new URL("../icon/logo.svg", import.meta.url).href;
 const welcomeUrl = new URL("../icon/欢迎图.svg", import.meta.url).href;
 const homeToolImageMap = {
@@ -118,13 +120,21 @@ const modalPlatformLogos = {
   },
 };
 
-const modalPlatformLogoOptions = Object.entries(modalPlatformLogos).map(([value, item]) => ({
-  value,
-  title: item.label,
-  label: <img className="platformOptionIcon" src={item.src} alt={item.label} />,
-}));
+const modalPlatformLogoOptions = [
+  {
+    value: "none",
+    title: "无 logo",
+    label: <StopOutlined className="platformOptionIcon platformOptionEmptyIcon" />,
+  },
+  ...Object.entries(modalPlatformLogos).map(([value, item]) => ({
+    value,
+    title: item.label,
+    label: <img className="platformOptionIcon" src={item.src} alt={item.label} />,
+  })),
+];
 
 function getModalPlatformLogoSource(value) {
+  if (value === "none") return "";
   return (modalPlatformLogos[value] || modalPlatformLogos.douyin).src;
 }
 
@@ -346,11 +356,11 @@ function measureTextWidth(text) {
   const context = canvas.getContext("2d");
   measureTextWidth.canvas = canvas;
   if (context) {
-    context.font = '700 18px "Alimama ShuHeiTi", "PingFang SC", "Microsoft YaHei", sans-serif';
+    context.font = '700 20px "Alimama ShuHeiTi", "PingFang SC", "Microsoft YaHei", sans-serif';
     return Math.ceil(context.measureText(value).width);
   }
 
-  return Array.from(value).reduce((sum, char) => sum + (/[\u4e00-\u9fa5]/.test(char) ? 18 : 9), 0);
+  return Array.from(value).reduce((sum, char) => sum + (/[\u4e00-\u9fa5]/.test(char) ? 20 : 10), 0);
 }
 
 function buildConfig(state) {
@@ -767,8 +777,8 @@ function App() {
 
     try {
       const canvas = currentPage === "modal" ? await renderModalPreviewToCanvas(modalState) : await renderBannerDownloadCanvas(config);
-      const blob = await canvasToPngBlob(canvas);
-      await savePngBlob(blob, currentPage === "modal" ? `${modalState.templateType}-notice-modal.png` : `${config.templateType}-banner.png`);
+      const blob = await canvasToJpgBlob(canvas);
+      await saveJpgBlob(blob, currentPage === "modal" ? `${modalState.templateType}-notice-modal.jpg` : `${config.templateType}-banner.jpg`);
       setDownloadLabel("下载成功");
     } catch (error) {
       console.error(error);
@@ -1229,7 +1239,7 @@ function NoticeModalPreview({ config }) {
           )}
           {config.subtitleEnabled && config.subtitle && (
             <div className="noticeSubtitle">
-              {isPointsTemplate && <img className="noticePlatformLogo" src={getModalPlatformLogoSource(config.platformLogo)} alt="" draggable={false} />}
+              {isPointsTemplate && getModalPlatformLogoSource(config.platformLogo) && <img className="noticePlatformLogo" src={getModalPlatformLogoSource(config.platformLogo)} alt="" draggable={false} />}
               <span>{config.subtitle}</span>
               {!isPointsTemplate && <img src={modalSubtitleIconUrl} alt="" draggable={false} />}
             </div>
@@ -1414,6 +1424,7 @@ async function renderPreviewSvgToCanvas(config) {
   document.body.append(host);
   const root = createRoot(host);
   root.render(<BannerCanvas config={config} exportWidth={1920} />);
+  if (document.fonts?.ready) await document.fonts.ready;
   await nextFrame();
 
   const source = host.querySelector(".bannerCanvas");
@@ -1457,13 +1468,17 @@ async function renderPreviewSvgToCanvas(config) {
     ];
 
     if (iconHref && iconRect) parts.push(svgImage(iconHref, iconRect));
-    parts.push(svgMessageText(config.content.message, config.content.highlightRanges, messageRect.x, height / 2 + 1, config.theme.textColor));
+    parts.push(svgMessageText(config.content.message, config.content.highlightRanges, messageRect.x, contentRect.y + contentRect.height / 2, config.theme.textColor, {
+      target: "banner-message",
+    }));
 
     if (buttonRect && config.button.enabled) {
       parts.push(svgPill(buttonRect, "contentStroke"));
       parts.push(svgPill(insetRect(buttonRect, 1), "buttonFill"));
       if (buttonTextRect) {
-        parts.push(svgText(config.button.text, buttonRect.x + buttonRect.width / 2, height / 2 + 1, "middle", config.theme.textColor));
+        parts.push(svgText(config.button.text, buttonRect.x + buttonRect.width / 2, buttonRect.y + buttonRect.height / 2, "middle", config.theme.textColor, {
+          target: "banner-button",
+        }));
       }
     }
 
@@ -1473,16 +1488,7 @@ async function renderPreviewSvgToCanvas(config) {
     const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(svgBlob);
 
-    try {
-      const image = await loadImage(url);
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext("2d").drawImage(image, 0, 0);
-      return canvas;
-    } finally {
-      URL.revokeObjectURL(url);
-    }
+    return await renderSvgUrlToCanvas(url, width, height);
   } finally {
     root.unmount();
     host.remove();
@@ -1513,10 +1519,12 @@ function insetRect(rect, inset) {
 }
 
 async function imageElementToHref(image) {
+  const src = image.currentSrc || image.src;
+  if (src && (src.startsWith("data:image/svg+xml") || /\.svg(?:$|\?)/.test(src))) return src;
   try {
     return await imageToDataUrl(image);
   } catch {
-    return image.currentSrc || image.src;
+    return src;
   }
 }
 
@@ -1540,11 +1548,13 @@ function svgImage(href, rect) {
   return `<image href="${escapeAttribute(href)}" x="${round(rect.x)}" y="${round(rect.y)}" width="${round(rect.width)}" height="${round(rect.height)}" preserveAspectRatio="xMidYMid meet"/>`;
 }
 
-function svgText(text, x, y, anchor, color) {
-  return `<text x="${round(x)}" y="${round(y)}" fill="${escapeAttribute(color)}" font-family="Alimama ShuHeiTi, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700" dominant-baseline="middle" text-anchor="${anchor}">${escapeText(text)}</text>`;
+function svgText(text, x, y, anchor, color, exportMeta) {
+  const dy = exportMeta?.target ? "0.12em" : "";
+  const dyAttribute = dy ? ` dy="${dy}"` : "";
+  return `<text x="${round(x)}" y="${round(y)}"${dyAttribute} fill="${escapeAttribute(color)}" font-family="Alimama ShuHeiTi, PingFang SC, Microsoft YaHei, sans-serif" font-size="20" font-weight="700" dominant-baseline="middle" text-anchor="${anchor}">${escapeText(text)}</text>`;
 }
 
-function svgMessageText(text, ranges, x, y, color) {
+function svgMessageText(text, ranges, x, y, color, exportMeta) {
   const segments = splitMessageSegments(text, ranges);
   let cursorX = x;
   const tspans = segments.map((segment) => {
@@ -1552,7 +1562,9 @@ function svgMessageText(text, ranges, x, y, color) {
     cursorX += measureTextWidth(segment.text);
     return tspan;
   });
-  return `<text y="${round(y)}" font-family="Alimama ShuHeiTi, PingFang SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="700" dominant-baseline="middle" text-anchor="start">${tspans.join("")}</text>`;
+  const dy = exportMeta?.target ? "0.12em" : "";
+  const dyAttribute = dy ? ` dy="${dy}"` : "";
+  return `<text y="${round(y)}"${dyAttribute} font-family="Alimama ShuHeiTi, PingFang SC, Microsoft YaHei, sans-serif" font-size="20" font-weight="700" dominant-baseline="middle" text-anchor="start">${tspans.join("")}</text>`;
 }
 
 function svgLinearGradient(id, value, fallbackDirection) {
@@ -1618,6 +1630,7 @@ async function renderModalPreviewSvgToCanvas(config) {
   root.render(<NoticeModalPreview config={config} />);
 
   try {
+    if (document.fonts?.ready) await document.fonts.ready;
     await nextFrame();
     await nextFrame();
     const preview = host.querySelector(".noticeModalCanvas");
@@ -1638,7 +1651,8 @@ async function renderModalPreviewSvgToCanvasFromConfig(config) {
   const hasSubtitle = Boolean(config.subtitleEnabled && config.subtitle);
   const backgroundHref = await imageSourceToDataUrl(modalBackgroundMap[config.templateType] || modalBackgroundMap.paragraph);
   const subtitleIconHref = !isPointsTemplate && hasSubtitle ? await imageSourceToDataUrl(modalSubtitleIconUrl) : "";
-  const platformLogoHref = isPointsTemplate ? await imageSourceToDataUrl(getModalPlatformLogoSource(config.platformLogo)) : "";
+  const platformLogoSource = getModalPlatformLogoSource(config.platformLogo);
+  const platformLogoHref = isPointsTemplate && platformLogoSource ? await imageSourceToDataUrl(platformLogoSource) : "";
   const parts = [
     `<image href="${escapeAttribute(backgroundHref)}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice"/>`,
   ];
@@ -1650,7 +1664,7 @@ async function renderModalPreviewSvgToCanvasFromConfig(config) {
     parts.push(svgRichLine(config.title, config.titleHighlightRanges, 36, 74, "start", modalFont(36, 700), "rgba(0, 0, 0, 0.9)", "#EA572E"));
     if (hasSubtitle) {
       const subtitleFont = modalFont(22, 700);
-      parts.push(svgPlainText(config.subtitle, 72, 160, "start", subtitleFont, "rgba(0, 0, 0, 0.9)"));
+      parts.push(svgPlainText(config.subtitle, platformLogoHref ? 72 : 36, 160, "start", subtitleFont, "rgba(0, 0, 0, 0.9)"));
     }
 
     parts.push(svgPointList(config.body, config.bodyHighlightRanges, 48, 251, 504));
@@ -1698,21 +1712,7 @@ async function renderModalPreviewSvgToCanvasFromConfig(config) {
   const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
 
-  try {
-    const image = await loadImage(url);
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("当前浏览器不支持 Canvas 导出");
-    context.drawImage(image, 0, 0, width, height);
-    assertCanvasExportable(canvas);
-    return canvas;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+  return await renderSvgUrlToCanvas(url, width, height);
 }
 
 async function renderMeasuredModalSvgToCanvas(element, width, height) {
@@ -1768,15 +1768,20 @@ async function renderMeasuredModalSvgToCanvas(element, width, height) {
   const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
 
+  return await renderSvgUrlToCanvas(url, width, height);
+}
+
+async function renderSvgUrlToCanvas(url, width, height) {
   try {
     const image = await loadImage(url);
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * DOWNLOAD_SCALE);
+    canvas.height = Math.round(height * DOWNLOAD_SCALE);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("当前浏览器不支持 Canvas 导出");
+    context.scale(DOWNLOAD_SCALE, DOWNLOAD_SCALE);
     context.drawImage(image, 0, 0, width, height);
     assertCanvasExportable(canvas);
     return canvas;
@@ -1816,6 +1821,20 @@ function collectNodeCharacterRuns(node, value, style, rootRect) {
   let current = null;
   const parentElement = node.parentElement;
   const isButtonText = Boolean(parentElement?.closest(".noticeModalCard button"));
+  const centerAlignedTextContainer = parentElement?.closest(".noticeModalHeader h2, .noticeSubtitle, .noticeModalCard button");
+  const centerAlignedTextRect = centerAlignedTextContainer?.getBoundingClientRect();
+  const centerAlignedTextY = centerAlignedTextRect
+    ? centerAlignedTextRect.top - rootRect.top + centerAlignedTextRect.height / 2
+    : null;
+  const exportTextTarget = centerAlignedTextContainer?.matches(".noticeModalHeader h2")
+    ? "title"
+    : centerAlignedTextContainer?.matches(".noticeSubtitle")
+      ? "subtitle"
+      : centerAlignedTextContainer?.matches(".noticeModalCard button")
+        ? "button"
+        : parentElement?.closest(".noticeModalCanvas-points .noticePointItem p")
+          ? "point-body"
+          : "";
   Array.from(value).forEach((char, index) => {
     const range = document.createRange();
     range.setStart(node, index);
@@ -1823,17 +1842,20 @@ function collectNodeCharacterRuns(node, value, style, rootRect) {
     const rect = range.getBoundingClientRect();
     range.detach();
     if (!rect.width || !rect.height) return;
+    const rangeCenterY = rect.top - rootRect.top + rect.height / 2;
+    const finalSvgY = centerAlignedTextY ?? rangeCenterY;
 
     const run = {
       text: char,
       x: rect.left - rootRect.left,
-      y: rect.top - rootRect.top + rect.height / 2,
+      y: finalSvgY,
       width: rect.width,
       color: style.color,
       fontFamily: style.fontFamily,
       fontSize: parseFloat(style.fontSize) || 14,
       fontWeight: normalizeFontWeight(style.fontWeight),
       isButtonText,
+      exportTextTarget,
     };
 
     if (current && canMergeTextRun(current, run)) {
@@ -1864,8 +1886,9 @@ function normalizeFontWeight(weight) {
 }
 
 function svgMeasuredTextRun(run) {
-  const y = run.isButtonText ? run.y + 2 : run.y;
-  return `<text x="${round(run.x)}" y="${round(y)}" fill="${escapeAttribute(run.color)}" font-family="${escapeAttribute(run.fontFamily)}" font-size="${round(run.fontSize)}" font-weight="${run.fontWeight}" dominant-baseline="middle" text-anchor="start">${escapeText(run.text)}</text>`;
+  const dy = run.exportTextTarget ? "0.12em" : "";
+  const dyAttribute = dy ? ` dy="${dy}"` : "";
+  return `<text x="${round(run.x)}" y="${round(run.y)}"${dyAttribute} fill="${escapeAttribute(run.color)}" font-family="${escapeAttribute(run.fontFamily)}" font-size="${round(run.fontSize)}" font-weight="${run.fontWeight}" dominant-baseline="middle" text-anchor="start">${escapeText(run.text)}</text>`;
 }
 
 async function renderElementSnapshotToCanvas(element, width, height) {
@@ -2080,13 +2103,15 @@ async function renderModalPreviewToCanvasLegacy(config) {
   const canvas = document.createElement("canvas");
   const width = 600;
   const height = 400;
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = Math.round(width * DOWNLOAD_SCALE);
+  canvas.height = Math.round(height * DOWNLOAD_SCALE);
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
 
   const context = canvas.getContext("2d");
   if (!context) throw new Error("当前浏览器不支持 Canvas 导出");
+  context.scale(DOWNLOAD_SCALE, DOWNLOAD_SCALE);
+  context.textBaseline = "middle";
 
   const background = await loadImage(modalBackgroundMap[config.templateType] || modalBackgroundMap.paragraph);
   context.drawImage(background, 0, 0, width, height);
@@ -2125,7 +2150,7 @@ async function renderModalPreviewToCanvasLegacy(config) {
     roundRect(context, subtitleX, isPointsTemplate ? 108 : 91, subtitleWidth, isPointsTemplate ? 32 : 34, 16);
     context.fill();
     context.fillStyle = isPointsTemplate ? "#FFFFFF" : "#EA572E";
-    context.fillText(config.subtitle, isPointsTemplate ? width / 2 : subtitleX + 32 + measureCanvasText(context, config.subtitle) / 2, isPointsTemplate ? 130 : 117);
+    context.fillText(config.subtitle, isPointsTemplate ? width / 2 : subtitleX + 32 + measureCanvasText(context, config.subtitle) / 2, isPointsTemplate ? 108 + 32 / 2 : 91 + 34 / 2);
     if (!isPointsTemplate) {
       try {
         const subtitleIcon = await loadImage(modalSubtitleIconUrl);
@@ -2166,7 +2191,7 @@ async function renderModalPreviewToCanvasLegacy(config) {
         line.text,
         remapRangesToPointLine(config.bodyHighlightRanges, line),
         48,
-        rowY + 29,
+        rowY + rowHeight / 2,
         504,
       );
       rowY += rowHeight + 10;
@@ -2195,7 +2220,7 @@ async function renderModalPreviewToCanvasLegacy(config) {
     context.fill();
     context.fillStyle = "#FFFFFF";
     context.textAlign = "center";
-    context.fillText(config.buttonText, isPointsTemplate ? buttonX + buttonWidth / 2 : width / 2, isPointsTemplate ? 351 : 363);
+    context.fillText(config.buttonText, isPointsTemplate ? buttonX + buttonWidth / 2 : width / 2, (isPointsTemplate ? 292 : 335) + (isPointsTemplate ? 32 : 40) / 2);
   }
 
   return canvas;
@@ -2306,20 +2331,20 @@ function wrapCanvasText(context, text, x, y, maxWidth, lineHeight) {
   if (line) context.fillText(line, x, lineY);
 }
 
-function canvasToPngBlob(canvas) {
+function canvasToJpgBlob(canvas) {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
-      else reject(new Error("无法生成 PNG 图片"));
-    }, "image/png");
+      else reject(new Error("无法生成 JPG 图片"));
+    }, "image/jpeg", 1);
   });
 }
 
-async function savePngBlob(blob, filename) {
+async function saveJpgBlob(blob, filename) {
   if (window.showSaveFilePicker) {
     const handle = await window.showSaveFilePicker({
       suggestedName: filename,
-      types: [{ description: "PNG 图片", accept: { "image/png": [".png"] } }],
+      types: [{ description: "JPG 图片", accept: { "image/jpeg": [".jpg", ".jpeg"] } }],
     });
     const writable = await handle.createWritable();
     await writable.write(blob);

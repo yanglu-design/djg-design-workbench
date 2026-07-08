@@ -608,6 +608,11 @@ select {
   width: 20px;
 }
 
+.platformOptionEmptyIcon {
+  color: #bfbfbf;
+  font-size: 20px;
+}
+
 .platformLogoDropdown {
   width: 164px !important;
 }
@@ -1214,10 +1219,10 @@ select {
   display: inline-flex;
   flex: 0 0 auto;
   font-family: "Alimama ShuHeiTi", "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   height: 44px;
-  line-height: 1;
+  line-height: 24px;
   position: relative;
   white-space: nowrap;
 }
