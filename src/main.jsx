@@ -288,16 +288,16 @@ const tipPlacementOptions = [
 ];
 
 const iconAssetMap = {
-  normal: new URL("../icon/提示装饰-普通通知.svg", import.meta.url).href,
-  feature: new URL("../icon/提示装饰-功能上线.svg", import.meta.url).href,
-  important: new URL("../icon/提示装饰-重要通知.svg", import.meta.url).href,
-  survey: new URL("../icon/提示装饰-问卷调研.svg", import.meta.url).href,
-  revisit: new URL("../icon/提示装饰-调研回访.svg", import.meta.url).href,
-  tutorial: new URL("../icon/提示装饰-教程引导.svg", import.meta.url).href,
+  normal: new URL("../icon/提示装饰-普通通知.webp", import.meta.url).href,
+  feature: new URL("../icon/提示装饰-功能上线.webp", import.meta.url).href,
+  important: new URL("../icon/提示装饰-重要通知.webp", import.meta.url).href,
+  survey: new URL("../icon/提示装饰-问卷调研.webp", import.meta.url).href,
+  revisit: new URL("../icon/提示装饰-调研回访.webp", import.meta.url).href,
+  tutorial: new URL("../icon/提示装饰-教程引导.webp", import.meta.url).href,
 };
 
 const decorationAssetMap = {
-  "click-hand": new URL("../icon/指引装饰-通用.svg", import.meta.url).href,
+  "click-hand": new URL("../icon/指引装饰-通用.webp", import.meta.url).href,
 };
 
 const iconDataImportMap = {
@@ -700,11 +700,21 @@ function App() {
     if (currentPage !== "banner") return;
 
     Promise.allSettled(
-      [config.icon.type, config.decoration.type].filter(Boolean).map((type) => ensureInlineAsset(type)),
+      [
+        config.icon.enabled && config.icon.type,
+        config.decoration.enabled && config.button.enabled && config.decoration.type,
+      ].filter(Boolean).map((type) => ensureInlineAsset(type)),
     ).then(() => {
       setState((current) => ({ ...current }));
     });
-  }, [currentPage, config.icon.type, config.decoration.type]);
+  }, [
+    currentPage,
+    config.icon.enabled,
+    config.icon.type,
+    config.button.enabled,
+    config.decoration.enabled,
+    config.decoration.type,
+  ]);
 
   function updateField(key, value) {
     setState((current) => ({
@@ -1589,7 +1599,10 @@ function round(value) {
 }
 
 async function renderBannerDownloadCanvas(config) {
-  await Promise.all([config.icon.type, config.decoration.type].filter(Boolean).map((type) => ensureInlineAsset(type)));
+  await Promise.all([
+    config.icon.enabled && config.icon.type,
+    config.decoration.enabled && config.button.enabled && config.decoration.type,
+  ].filter(Boolean).map((type) => ensureInlineAsset(type)));
   return renderPreviewSvgToCanvas(config);
 }
 
