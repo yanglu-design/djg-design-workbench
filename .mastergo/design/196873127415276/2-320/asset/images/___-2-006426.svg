@@ -1,0 +1,12 @@
+{
+  "kind": "node-export",
+  "nodeId": "2:006426",
+  "format": "SVG",
+  "exportSettingIndex": 0,
+  "fileName": "",
+  "isSuffix": true,
+  "constraint": {
+    "type": "SCALE",
+    "value": 1
+  }
+}

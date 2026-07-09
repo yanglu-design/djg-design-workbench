@@ -32,13 +32,13 @@ import "./styles.css";
 const { Sider, Content } = Layout;
 const { Text, Title } = Typography;
 const DOWNLOAD_SCALE = 2;
-const logoUrl = new URL("../icon/logo.svg", import.meta.url).href;
-const welcomeUrl = new URL("../icon/欢迎图.svg", import.meta.url).href;
+const logoUrl = new URL("../icon/logo.png", import.meta.url).href;
+const welcomeUrl = new URL("../icon/欢迎图.webp", import.meta.url).href;
 const homeToolImageMap = {
-  banner: new URL("../icon/功能配图/横幅广告配置器.svg", import.meta.url).href,
-  modal: new URL("../icon/功能配图/公告弹窗配置器.svg", import.meta.url).href,
-  poster: new URL("../icon/功能配图/活动海报生成器.svg", import.meta.url).href,
-  detail: new URL("../icon/功能配图/详情页模块编辑器.svg", import.meta.url).href,
+  banner: new URL("../icon/功能配图/横幅广告配置器.webp", import.meta.url).href,
+  modal: new URL("../icon/功能配图/公告弹窗配置器.webp", import.meta.url).href,
+  poster: new URL("../icon/功能配图/活动海报生成器.webp", import.meta.url).href,
+  detail: new URL("../icon/功能配图/详情页模块编辑器.webp", import.meta.url).href,
 };
 const modalBackgroundMap = {
   paragraph: new URL("../icon/段落式模版背景.svg", import.meta.url).href,
@@ -342,14 +342,6 @@ function ensureInlineAsset(type) {
   return loader;
 }
 
-function getAllTemplateAssetTypes() {
-  const types = Object.values(bannerTemplates).flatMap((template) => [
-    template.defaultIcon,
-    template.defaultDecoration,
-  ]);
-  return Array.from(new Set(types.filter(Boolean)));
-}
-
 function measureTextWidth(text) {
   const value = String(text);
   const canvas = measureTextWidth.canvas || document.createElement("canvas");
@@ -642,7 +634,7 @@ function HomePage({ onNavigate }) {
             >
               <Flex align="stretch" gap={16}>
                 <div className="homeToolThumb" aria-hidden="true">
-                  <img className="homeToolImage" src={tool.image} alt="" />
+                  <img className="homeToolImage" src={tool.image} alt="" width="120" height="120" decoding="async" />
                 </div>
                 <Flex className="homeToolContent" vertical justify="space-between" gap={16}>
                   <Flex vertical gap={4}>
@@ -705,18 +697,14 @@ function App() {
   const currentPageCanDownload = currentPage === "banner" || currentPage === "modal";
 
   useEffect(() => {
-    const preload = () => {
-      Promise.allSettled(getAllTemplateAssetTypes().map((type) => ensureInlineAsset(type))).then(() => {
-        setState((current) => ({ ...current }));
-      });
-    };
+    if (currentPage !== "banner") return;
 
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(preload, { timeout: 1000 });
-    } else {
-      window.setTimeout(preload, 0);
-    }
-  }, []);
+    Promise.allSettled(
+      [config.icon.type, config.decoration.type].filter(Boolean).map((type) => ensureInlineAsset(type)),
+    ).then(() => {
+      setState((current) => ({ ...current }));
+    });
+  }, [currentPage, config.icon.type, config.decoration.type]);
 
   function updateField(key, value) {
     setState((current) => ({
@@ -885,7 +873,7 @@ function App() {
       <Layout className="appShell">
         <Sider className="sidebar" theme="light" width={240}>
           <Flex className="brandBlock" align="center" gap={8}>
-            <img className="brandLogo" src={logoUrl} alt="" />
+            <img className="brandLogo" src={logoUrl} alt="" width="32" height="32" decoding="async" />
             <Flex vertical className="brandText">
               <Text strong>店管家设计工作台</Text>
               <Text>高效设计·规范输出·团队协同</Text>
