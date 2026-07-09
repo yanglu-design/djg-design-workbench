@@ -777,8 +777,13 @@ function App() {
 
     try {
       const canvas = currentPage === "modal" ? await renderModalPreviewToCanvas(modalState) : await renderBannerDownloadCanvas(config);
-      const blob = await canvasToJpgBlob(canvas);
-      await saveJpgBlob(blob, currentPage === "modal" ? `${modalState.templateType}-notice-modal.jpg` : `${config.templateType}-banner.jpg`);
+      if (currentPage === "modal") {
+        const blob = await canvasToPngBlob(canvas);
+        await savePngBlob(blob, `${modalState.templateType}-notice-modal.png`);
+      } else {
+        const blob = await canvasToJpgBlob(canvas);
+        await saveJpgBlob(blob, `${config.templateType}-banner.jpg`);
+      }
       setDownloadLabel("下载成功");
     } catch (error) {
       console.error(error);
@@ -2340,11 +2345,42 @@ function canvasToJpgBlob(canvas) {
   });
 }
 
+function canvasToPngBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("无法生成 PNG 图片"));
+    }, "image/png");
+  });
+}
+
 async function saveJpgBlob(blob, filename) {
   if (window.showSaveFilePicker) {
     const handle = await window.showSaveFilePicker({
       suggestedName: filename,
       types: [{ description: "JPG 图片", accept: { "image/jpeg": [".jpg", ".jpeg"] } }],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function savePngBlob(blob, filename) {
+  if (window.showSaveFilePicker) {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [{ description: "PNG 图片", accept: { "image/png": [".png"] } }],
     });
     const writable = await handle.createWritable();
     await writable.write(blob);
