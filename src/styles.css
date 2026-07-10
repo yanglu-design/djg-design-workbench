@@ -284,20 +284,56 @@ select {
 }
 
 .homeToolCard-blue {
+  --home-tool-action-bg: rgba(8, 136, 255, 0.1);
+  --home-tool-action-border: rgba(8, 136, 255, 0.2);
+  --home-tool-action-color: #0888ff;
+  --home-tool-action-hover-bg: rgba(8, 136, 255, 0.14);
+  --home-tool-action-hover-border: rgba(8, 136, 255, 0.32);
+  --home-tool-action-hover-color: #1677ff;
+  --home-tool-action-active-bg: rgba(8, 136, 255, 0.18);
+  --home-tool-action-active-border: rgba(8, 136, 255, 0.42);
+  --home-tool-action-active-color: #006edc;
   background: rgba(64, 136, 253, 0.04);
 }
 
 .homeToolCard-purple {
+  --home-tool-action-bg: rgba(161, 82, 255, 0.1);
+  --home-tool-action-border: rgba(161, 82, 255, 0.2);
+  --home-tool-action-color: #a152ff;
+  --home-tool-action-hover-bg: rgba(161, 82, 255, 0.14);
+  --home-tool-action-hover-border: rgba(161, 82, 255, 0.32);
+  --home-tool-action-hover-color: #9b42ff;
+  --home-tool-action-active-bg: rgba(161, 82, 255, 0.18);
+  --home-tool-action-active-border: rgba(161, 82, 255, 0.42);
+  --home-tool-action-active-color: #8732e6;
   background: rgba(156, 108, 253, 0.04);
   border-color: rgba(156, 108, 253, 0.24) !important;
 }
 
 .homeToolCard-green {
+  --home-tool-action-bg: rgba(49, 211, 182, 0.1);
+  --home-tool-action-border: rgba(49, 211, 182, 0.22);
+  --home-tool-action-color: #13a88e;
+  --home-tool-action-hover-bg: rgba(49, 211, 182, 0.16);
+  --home-tool-action-hover-border: rgba(49, 211, 182, 0.36);
+  --home-tool-action-hover-color: #0f8f79;
+  --home-tool-action-active-bg: rgba(49, 211, 182, 0.2);
+  --home-tool-action-active-border: rgba(49, 211, 182, 0.46);
+  --home-tool-action-active-color: #0b7664;
   background: rgba(49, 211, 182, 0.04);
   border-color: rgba(49, 211, 182, 0.24) !important;
 }
 
 .homeToolCard-orange {
+  --home-tool-action-bg: rgba(254, 149, 45, 0.1);
+  --home-tool-action-border: rgba(254, 149, 45, 0.22);
+  --home-tool-action-color: #e67612;
+  --home-tool-action-hover-bg: rgba(254, 149, 45, 0.16);
+  --home-tool-action-hover-border: rgba(254, 149, 45, 0.36);
+  --home-tool-action-hover-color: #c9640e;
+  --home-tool-action-active-bg: rgba(254, 149, 45, 0.2);
+  --home-tool-action-active-border: rgba(254, 149, 45, 0.46);
+  --home-tool-action-active-color: #ad5408;
   background: rgba(254, 149, 45, 0.04);
   border-color: rgba(254, 149, 45, 0.24) !important;
 }
@@ -344,11 +380,11 @@ select {
 .homeToolAction.ant-btn {
   align-items: center;
   align-self: flex-start;
-  background: rgba(8, 136, 255, 0.1) !important;
-  border: 1px solid rgba(8, 136, 255, 0.2);
+  background: var(--home-tool-action-bg) !important;
+  border: 1px solid var(--home-tool-action-border);
   border-radius: 999px;
   box-shadow: none;
-  color: #0888ff;
+  color: var(--home-tool-action-color);
   display: inline-flex;
   gap: 8px;
   font-size: 14px;
@@ -362,25 +398,36 @@ select {
   width: fit-content;
 }
 
-.homeToolCard-purple .homeToolAction.ant-btn {
-  background: rgba(161, 82, 255, 0.1) !important;
-  border-color: rgba(161, 82, 255, 0.2);
-  color: #a152ff;
-}
-
 .homeToolAction.ant-btn:hover,
 .homeToolAction.ant-btn:focus {
-  background: rgba(8, 136, 255, 0.14) !important;
-  border-color: rgba(8, 136, 255, 0.32);
-  color: #1677ff;
+  background: var(--home-tool-action-hover-bg) !important;
+  border-color: var(--home-tool-action-hover-border);
+  color: var(--home-tool-action-hover-color);
   text-decoration: none;
 }
 
-.homeToolCard-purple .homeToolAction.ant-btn:hover,
-.homeToolCard-purple .homeToolAction.ant-btn:focus {
-  background: rgba(161, 82, 255, 0.14) !important;
-  border-color: rgba(161, 82, 255, 0.32);
-  color: #9b42ff;
+.homeToolAction.ant-btn:active {
+  background: var(--home-tool-action-active-bg) !important;
+  border-color: var(--home-tool-action-active-border);
+  color: var(--home-tool-action-active-color);
+}
+
+.homePage .homeToolCard .homeToolAction.ant-btn.ant-btn-variant-link:not(:disabled):not(.ant-btn-disabled):hover,
+.homePage .homeToolCard .homeToolAction.ant-btn.ant-btn-variant-link:not(:disabled):not(.ant-btn-disabled):focus {
+  background: var(--home-tool-action-hover-bg) !important;
+  border-color: var(--home-tool-action-hover-border) !important;
+  color: var(--home-tool-action-hover-color) !important;
+}
+
+.homePage .homeToolCard .homeToolAction.ant-btn.ant-btn-variant-link:not(:disabled):not(.ant-btn-disabled):active {
+  background: var(--home-tool-action-active-bg) !important;
+  border-color: var(--home-tool-action-active-border) !important;
+  color: var(--home-tool-action-active-color) !important;
+}
+
+.homePage .homeToolCard .homeToolAction.ant-btn .ant-btn-icon,
+.homePage .homeToolCard .homeToolAction.ant-btn .anticon {
+  color: inherit;
 }
 
 .homeToolAction.ant-btn > span:not(.ant-btn-icon) {
